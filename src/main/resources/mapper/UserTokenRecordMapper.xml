@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.blockinsight.basefi.mapper.UserTokenRecordMapper">
+    <select id="userTokenList" resultType="com.blockinsight.basefi.entity.UserTokenRecord"
+            parameterType="java.util.HashMap">
+        select a.*,b.order_status from user_token_record a ,`order` b where
+        a.order_num = b.order_num and a.user_num =#{userAddr}
+        <if test="status > 0">
+            and b.order_status = ${status}
+        </if>
+        LIMIT ${pageNumber},${pageSize}
+    </select>
+
+    <select id="userTokenListCount" resultType="long"
+            parameterType="java.util.HashMap">
+        select COUNT(*) from user_token_record a ,`order` b where
+        a.order_num = b.order_num and a.user_num =#{userAddr}
+        <if test="status > 0">
+            and b.order_status = ${status}
+        </if>
+    </select>
+    <select id="searchBar" resultType="com.blockinsight.basefi.entity.UserTokenRecord"
+            parameterType="java.lang.String">
+        select #{checkName} tokenAddr, order_num orderNum from
+        `order` where
+        buyer_token_addr = #{checkName} or
+        seller_token_addr = #{checkName}
+    </select>
+
+</mapper>

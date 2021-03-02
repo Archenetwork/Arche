@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.blockinsight.basefi.mapper.OrderMapper">
+
+    <update id="updateOrderById" parameterType="java.util.List">
+        update `order`
+        <trim prefix="set" suffixOverrides=",">
+            <trim prefix="contract_status =case" suffix="end,">
+                <foreach collection="orderList" item="cus">
+                    <if test="cus.contractStatus!=null">
+                        when order_id=#{cus.orderId} then #{cus.contractStatus}
+                    </if>
+                </foreach>
+            </trim>
+            <trim prefix="recommend_order_status =case" suffix="end,">
+                <foreach collection="orderList" item="cus">
+                    <if test="cus.recommendOrderStatus!=null">
+                        when order_id=#{cus.orderId} then #{cus.recommendOrderStatus}
+                    </if>
+                </foreach>
+            </trim>
+        </trim>
+        where order_id in
+        <foreach item="order" collection="orderList" open="(" separator="," close=")">
+            #{order.orderId}
+        </foreach>
+
+    </update>
+</mapper>

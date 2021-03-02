@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.blockinsight.basefi.mapper.RecommendOrderMapper">
+
+
+    <select id="getOrderNum" resultType="com.blockinsight.basefi.entity.RecommendOrder">
+        select ifnull(sum(total_num),0) totalNum, ifnull(sum(wait_effect_num),0) waitEffectNum,
+        ifnull(sum(wait_delivery_num),0) waitDeliveryNum
+        from recommend_order
+        <if test="chainType != null">
+            where chain_type = ${chainType}
+        </if>
+    </select>
+</mapper>

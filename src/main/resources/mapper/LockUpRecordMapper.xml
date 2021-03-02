@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.blockinsight.basefi.mapper.LockUpRecordMapper">
+
+    <select id="getSumPriceAndCurrentPrice" resultType="java.util.Map">
+        select sum(ifnull(l.sum_count, 0) * ifnull(p.price, 0)) sumPrice,
+        sum(ifnull(l.current_count,0) * ifnull(p.price, 0)) currentPrice
+        from lock_up_record l left join token_price p on p.token_addr = l.token_addr
+        <if test="chainType != null">
+            where l.chain_type = ${chainType}
+        </if>
+    </select>
+
+    <select id="getTopThreeCurrentPriceToken" resultType="java.util.Map">
+        select ifnull(l.current_count,0) * ifnull(p.price, 0) currPrice,
+        l.current_count , l.token_addr, p.name, p.img
+        from lock_up_record l
+        left join token_price p on p.token_addr = l.token_addr
+        <if test="chainType != null">
+            where l.chain_type = ${chainType}
+        </if>
+        group by l.token_addr order by currPrice desc limit 3
+    </select>
+</mapper>

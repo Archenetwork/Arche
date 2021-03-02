@@ -1,0 +1,59 @@
+package com.blockinsight.basefi.service.impl;
+
+import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
+import com.blockinsight.basefi.common.resp.R;
+import com.blockinsight.basefi.entity.TokenPrice;
+import com.blockinsight.basefi.mapper.TokenPriceMapper;
+import com.blockinsight.basefi.service.ITokenPriceService;
+import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.stereotype.Service;
+
+/**
+ * <p>
+ * 代币价格 服务实现类
+ * </p>
+ *
+ * @author Janin
+ * @since 2021-02-03
+ */
+@Slf4j
+@Service
+public class TokenPriceServiceImpl extends ServiceImpl<TokenPriceMapper, TokenPrice> implements ITokenPriceService {
+
+    @Override
+    public R saveTokenPrice(String name, String tokenAddr, String img) {
+        log.warn("新增基础代币参数 name:{} tokenAddr:{} img:{}", name, tokenAddr, img);
+        TokenPrice tokenPrice = this.getOne(new LambdaUpdateWrapper<TokenPrice>().eq(TokenPrice::getTokenAddr, tokenAddr));
+        if (tokenPrice == null) {
+            tokenPrice = this.getOne(new LambdaUpdateWrapper<TokenPrice>().eq(TokenPrice::getName, name));
+            if (tokenPrice == null) {
+                tokenPrice = new TokenPrice();
+                tokenPrice.setName(name);
+                tokenPrice.setImg(img);
+                tokenPrice.setTokenAddr(tokenAddr);
+                tokenPrice.setPrice("0");
+                this.save(tokenPrice);
+            } else {
+                tokenPrice.setImg(img);
+                tokenPrice.setTokenAddr(tokenAddr);
+                this.updateById(tokenPrice);
+            }
+        } else {
+            tokenPrice.setImg(img);
+            tokenPrice.setTokenAddr(tokenAddr);
+            this.updateById(tokenPrice);
+        }
+        return R.ok();
+    }
+
+    @Override
+    public R getTokenPrice(String name) {
+        TokenPrice tokenPrice = this.getOne(new LambdaUpdateWrapper<TokenPrice>().eq(TokenPrice::getTokenAddr, name));
+        if (tokenPrice == null) {
+            tokenPrice = new TokenPrice();
+            tokenPrice.setPrice("0");
+        }
+        return R.ok().put("data", tokenPrice);
+    }
+}
