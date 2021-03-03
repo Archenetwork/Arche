@@ -164,7 +164,8 @@ public class BaseFiJob {
                 if (!usdt.isEmpty()) {
                     for (DataDto dataDto : usdt) {
                         String name = dataDto.getSymbol().substring(0, dataDto.getSymbol().length() - 4);
-                        TokenPrice tokenPrice = iTokenPriceService.getOne(new LambdaUpdateWrapper<TokenPrice>().eq(TokenPrice::getName, name));
+                        TokenPrice tokenPrice = iTokenPriceService.getOne(new LambdaUpdateWrapper<TokenPrice>().eq(TokenPrice::getName, name)
+                                .eq(TokenPrice::getChainType, BaseConstants.ChainType.HB.getCode()).eq(TokenPrice::getType, BaseConstants.type0));
                         if (tokenPrice != null) {
                             tokenPrice.setPrice(dataDto.getClose());
                             iTokenPriceService.updateById(tokenPrice);
@@ -172,6 +173,7 @@ public class BaseFiJob {
                             tokenPrice = new TokenPrice();
                             tokenPrice.setPrice(dataDto.getClose());
                             tokenPrice.setName(name);
+                            tokenPrice.setChainType(BaseConstants.ChainType.HB.getCode());
                             iTokenPriceService.save(tokenPrice);
                         }
                     }

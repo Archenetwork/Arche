@@ -15,7 +15,7 @@
         select ifnull(l.current_count,0) * ifnull(p.price, 0) currPrice,
         l.current_count , l.token_addr, p.name, p.img
         from lock_up_record l
-        left join token_price p on p.token_addr = l.token_addr
+        left join token_price p on p.token_addr = l.token_addr and p.chain_type = l.chain_type
         <if test="chainType != null">
             where l.chain_type = ${chainType}
         </if>

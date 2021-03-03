@@ -11,6 +11,10 @@ public interface BaseConstants {
     int del = 2;
     int del2 = 3;
 
+    // 类型 0 手动维护 1 自动维护
+    int type0 = 0;
+    int type1 = 1;
+
     /**
      * 链类型
      */

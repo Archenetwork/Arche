@@ -33,10 +33,12 @@ public class TokenPriceController {
                                 @RequestParam("name") String name,
                             @ApiParam(name = "tokenAddr", value = "代币地址", required = true)
                             @RequestParam("tokenAddr") String tokenAddr,
-                            @ApiParam(name = "img", value = "图片", required = true)
-                                @RequestParam("img") String img) {
+                            @ApiParam(name = "img", value = "图片")
+                                @RequestParam("img") String img,
+                            @ApiParam(name = "chainType", value = "链类型")
+                                @RequestParam("chainType") Integer chainType) {
         try {
-            return iTokenPriceService.saveTokenPrice(name, tokenAddr, img);
+            return iTokenPriceService.saveTokenPrice(name, tokenAddr, img, chainType);
         } catch (Exception e) {
             log.error("新增基础代币异常", e);
             return R.error();
@@ -46,9 +48,11 @@ public class TokenPriceController {
     @ApiOperation(value = "查询基础代币", notes = "查询基础代币", httpMethod = "GET")
     @GetMapping("")
     public R getTokenPrice(@ApiParam(name = "addr", value = "地址", required = true)
-                            @RequestParam("addr") String addr) {
+                            @RequestParam("addr") String addr,
+                           @ApiParam(name = "chainType", value = "链类型")
+                           @RequestParam("chainType") Integer chainType) {
         try {
-            return iTokenPriceService.getTokenPrice(addr);
+            return iTokenPriceService.getTokenPrice(addr, chainType);
         } catch (Exception e) {
             log.error("查询基础代币异常", e);
             return R.error();

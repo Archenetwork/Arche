@@ -14,7 +14,7 @@ import com.baomidou.mybatisplus.extension.service.IService;
  */
 public interface ITokenPriceService extends IService<TokenPrice> {
 
-    R saveTokenPrice(String name, String tokenAddr, String img);
+    R saveTokenPrice(String name, String tokenAddr, String img, Integer chainType);
 
-    R getTokenPrice(String name);
+    R getTokenPrice(String name, Integer chainType);
 }

@@ -51,11 +51,11 @@ public class MysqlGenerator {
 
         // 数据源配置
         DataSourceConfig dsc = new DataSourceConfig();
-        dsc.setUrl("jdbc:mysql://xxx?useUnicode=true&useSSL=false&characterEncoding=utf8&serverTimezone=UTC");
+        dsc.setUrl("jdbc:mysql://103.71.252.146:27017/base-fi-test?useUnicode=true&useSSL=false&characterEncoding=utf8&serverTimezone=UTC");
         // dsc.setSchemaName("public");
         dsc.setDriverName("com.mysql.jdbc.Driver");
-        dsc.setUsername("xxx");
-        dsc.setPassword("xxx");
+        dsc.setUsername("base-fi-test");
+        dsc.setPassword("YD7xaBwFibzB8Ws5");
         mpg.setDataSource(dsc);
 
         // 包配置
@@ -116,7 +116,7 @@ public class MysqlGenerator {
         StrategyConfig strategy = new StrategyConfig();
         strategy.setNaming(NamingStrategy.underline_to_camel);
         strategy.setColumnNaming(NamingStrategy.underline_to_camel);
-        strategy.setSuperEntityClass("com.blockinsight.basefi.common.parentclass.BaseEntity"); //实体类公共父类
+//        strategy.setSuperEntityClass("com.blockinsight.basefi.common.parentclass.BaseEntity"); //实体类公共父类
         strategy.setEntityLombokModel(true);
         strategy.setRestControllerStyle(true);
         // 公共父类

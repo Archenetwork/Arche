@@ -1,6 +1,7 @@
 package com.blockinsight.basefi.service.impl;
 
 import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
+import com.blockinsight.basefi.common.constant.BaseConstants;
 import com.blockinsight.basefi.common.resp.R;
 import com.blockinsight.basefi.entity.TokenPrice;
 import com.blockinsight.basefi.mapper.TokenPriceMapper;
@@ -22,23 +23,20 @@ import org.springframework.stereotype.Service;
 public class TokenPriceServiceImpl extends ServiceImpl<TokenPriceMapper, TokenPrice> implements ITokenPriceService {
 
     @Override
-    public R saveTokenPrice(String name, String tokenAddr, String img) {
-        log.warn("新增基础代币参数 name:{} tokenAddr:{} img:{}", name, tokenAddr, img);
-        TokenPrice tokenPrice = this.getOne(new LambdaUpdateWrapper<TokenPrice>().eq(TokenPrice::getTokenAddr, tokenAddr));
+    public R saveTokenPrice(String name, String tokenAddr, String img, Integer chainType) {
+        log.warn("新增基础代币参数 name:{} tokenAddr:{} img:{} chainType:{}", name, tokenAddr, img, chainType);
+        TokenPrice tokenPrice = this.getOne(new LambdaUpdateWrapper<TokenPrice>()
+                .eq(TokenPrice::getTokenAddr, tokenAddr)
+                .eq(TokenPrice::getChainType, chainType)
+                .eq(TokenPrice::getType, BaseConstants.type0));
         if (tokenPrice == null) {
-            tokenPrice = this.getOne(new LambdaUpdateWrapper<TokenPrice>().eq(TokenPrice::getName, name));
-            if (tokenPrice == null) {
-                tokenPrice = new TokenPrice();
-                tokenPrice.setName(name);
-                tokenPrice.setImg(img);
-                tokenPrice.setTokenAddr(tokenAddr);
-                tokenPrice.setPrice("0");
-                this.save(tokenPrice);
-            } else {
-                tokenPrice.setImg(img);
-                tokenPrice.setTokenAddr(tokenAddr);
-                this.updateById(tokenPrice);
-            }
+            tokenPrice = new TokenPrice();
+            tokenPrice.setName(name);
+            tokenPrice.setImg(img);
+            tokenPrice.setTokenAddr(tokenAddr);
+            tokenPrice.setPrice("0");
+            tokenPrice.setChainType(chainType);
+            this.save(tokenPrice);
         } else {
             tokenPrice.setImg(img);
             tokenPrice.setTokenAddr(tokenAddr);
@@ -48,8 +46,8 @@ public class TokenPriceServiceImpl extends ServiceImpl<TokenPriceMapper, TokenPr
     }
 
     @Override
-    public R getTokenPrice(String name) {
-        TokenPrice tokenPrice = this.getOne(new LambdaUpdateWrapper<TokenPrice>().eq(TokenPrice::getTokenAddr, name));
+    public R getTokenPrice(String addr, Integer chainType) {
+        TokenPrice tokenPrice = this.getOne(new LambdaUpdateWrapper<TokenPrice>().eq(TokenPrice::getChainType, chainType).eq(TokenPrice::getTokenAddr, addr));
         if (tokenPrice == null) {
             tokenPrice = new TokenPrice();
             tokenPrice.setPrice("0");

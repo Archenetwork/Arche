@@ -46,5 +46,15 @@ public class TokenPrice implements Serializable {
      */
     private String tokenAddr;
 
+    /**
+     * 链类型 1 火币 2 币安
+     */
+    private Integer chainType;
+
+    /**
+     *  类型 0 手动维护 1 自动维护
+     */
+    private Integer type;
+
 
 }
