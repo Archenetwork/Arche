@@ -88,7 +88,7 @@ public class OrderBusiness {
                 } catch (Exception e) {
                     log.error("订单初始化事件异常", e);
                 }
-                log.warn("订单初始化快于订单创建 等待2s orderNum:{}", order.getOrderNum());
+                log.warn("订单初始化快于订单创建 等待2s orderNum:{} chainType:{}", order.getOrderNum(), order.getChainType());
             }
         }
         try {
@@ -294,7 +294,7 @@ public class OrderBusiness {
 
             LockUpRecord.TokenSumAddParam tokenSumAddParam = new LockUpRecord.TokenSumAddParam();
             tokenSumAddParam.setTokenAddr(order.getSellerSubjectMatterAddr());
-            tokenSumAddParam.setCount(MathUtils.weiToEth(new BigDecimal(order.getBuyerEarnestMoney()), 18).toString());
+            tokenSumAddParam.setCount(MathUtils.weiToEth(new BigDecimal(order.getSellerEarnestMoney()), 18).toString());
             tokenSumAddParam.setUuid(order.getOrderNum() + order.getSellerAddr());
             tokenSumAddParam.setType(BaseConstants.add);
             tokenSumAddParam.setChainType(order.getChainType());
@@ -426,7 +426,7 @@ public class OrderBusiness {
 
             LockUpRecord.TokenSumAddParam tokenSumAddParam = new LockUpRecord.TokenSumAddParam();
             tokenSumAddParam.setTokenAddr(order.getBuyerSubjectMatterAddr());
-            tokenSumAddParam.setCount(MathUtils.weiToEth(new BigDecimal(order.getBuyerEarnestMoney()), 18).toString());
+            tokenSumAddParam.setCount(MathUtils.weiToEth(new BigDecimal(depositRecordParam.getAmount()), 18).toString());
             tokenSumAddParam.setUuid(order.getOrderNum() + order.getBuyerAddr());
             tokenSumAddParam.setType(BaseConstants.add);
             tokenSumAddParam.setChainType(order.getChainType());
@@ -511,7 +511,7 @@ public class OrderBusiness {
 
             LockUpRecord.TokenSumAddParam tokenSumAddParam = new LockUpRecord.TokenSumAddParam();
             tokenSumAddParam.setTokenAddr(order.getSellerSubjectMatterAddr());
-            tokenSumAddParam.setCount(MathUtils.weiToEth(new BigDecimal(order.getBuyerEarnestMoney()), 18).toString());
+            tokenSumAddParam.setCount(MathUtils.weiToEth(new BigDecimal(depositRecordParam.getAmount()), 18).toString());
             tokenSumAddParam.setUuid(order.getOrderNum() + order.getSellerAddr());
             tokenSumAddParam.setType(BaseConstants.add);
             tokenSumAddParam.setChainType(order.getChainType());

@@ -41,8 +41,6 @@ public class BaseFiJob {
 
     @Autowired
     private IOrderService iOrderService;
-//    @Autowired
-//    private Web3j web3j;
     @Autowired
     private IMessageService iMessageService;
     @Autowired
@@ -164,17 +162,20 @@ public class BaseFiJob {
                 if (!usdt.isEmpty()) {
                     for (DataDto dataDto : usdt) {
                         String name = dataDto.getSymbol().substring(0, dataDto.getSymbol().length() - 4);
-                        TokenPrice tokenPrice = iTokenPriceService.getOne(new LambdaUpdateWrapper<TokenPrice>().eq(TokenPrice::getName, name)
-                                .eq(TokenPrice::getChainType, BaseConstants.ChainType.HB.getCode()).eq(TokenPrice::getType, BaseConstants.type0));
-                        if (tokenPrice != null) {
-                            tokenPrice.setPrice(dataDto.getClose());
-                            iTokenPriceService.updateById(tokenPrice);
-                        } else {
-                            tokenPrice = new TokenPrice();
+                        List<TokenPrice> tokenPrices = iTokenPriceService.list(new LambdaUpdateWrapper<TokenPrice>()
+                                .eq(TokenPrice::getName, name).or().eq(TokenPrice::getRealName, name));
+                        if (tokenPrices.isEmpty()) {
+                            TokenPrice tokenPrice = new TokenPrice();
                             tokenPrice.setPrice(dataDto.getClose());
                             tokenPrice.setName(name);
                             tokenPrice.setChainType(BaseConstants.ChainType.HB.getCode());
                             iTokenPriceService.save(tokenPrice);
+                        }
+                        for (TokenPrice price : tokenPrices) {
+                            if (price.getType() == 0) {
+                                price.setPrice(dataDto.getClose());
+                                iTokenPriceService.updateById(price);
+                            }
                         }
                     }
                 }

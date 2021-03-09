@@ -27,8 +27,7 @@ public class TokenPriceServiceImpl extends ServiceImpl<TokenPriceMapper, TokenPr
         log.warn("新增基础代币参数 name:{} tokenAddr:{} img:{} chainType:{}", name, tokenAddr, img, chainType);
         TokenPrice tokenPrice = this.getOne(new LambdaUpdateWrapper<TokenPrice>()
                 .eq(TokenPrice::getTokenAddr, tokenAddr)
-                .eq(TokenPrice::getChainType, chainType)
-                .eq(TokenPrice::getType, BaseConstants.type0));
+                .eq(TokenPrice::getChainType, chainType));
         if (tokenPrice == null) {
             tokenPrice = new TokenPrice();
             tokenPrice.setName(name);

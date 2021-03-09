@@ -39,15 +39,13 @@ import java.util.concurrent.TimeUnit;
 @Slf4j
 public class OrderServiceImpl extends ServiceImpl<OrderMapper, Order> implements IOrderService {
     @Autowired
-    private Web3j web3j;
-    @Autowired
     private IConfigService iConfigService;
 
 
     @Override
     public R recommendedOrder(Integer pageNumber, Integer pageSize) {
         log.warn("推荐订单 pageNumber:{} pageSize:{}", pageNumber, pageSize);
-        try {
+        /*try {
             // 获取当前节点最新区块号
             EthBlockNumber ethBlockNumber = web3j.ethBlockNumber().send();
             String endBlockNumber = ethBlockNumber.getBlockNumber().toString();
@@ -72,7 +70,8 @@ public class OrderServiceImpl extends ServiceImpl<OrderMapper, Order> implements
         } catch (Exception e) {
             log.error("推荐订单异常", e);
             return R.error();
-        }
+        }*/
+        return R.error();
     }
 
     @Override

@@ -28,9 +28,14 @@ import org.web3j.protocol.core.methods.request.EthFilter;
 import org.web3j.protocol.core.methods.response.EthBlock;
 import org.web3j.protocol.core.methods.response.Log;
 import org.web3j.protocol.http.HttpService;
+import org.web3j.protocol.rx.Web3jRx;
+import org.web3j.protocol.websocket.WebSocketClient;
+import org.web3j.protocol.websocket.WebSocketService;
 import org.web3j.tx.Contract;
 
+import javax.jws.WebService;
 import java.math.BigInteger;
+import java.net.URI;
 import java.util.Arrays;
 import java.util.Date;
 import java.util.List;
@@ -43,8 +48,6 @@ public class EventListener implements ApplicationRunner {
 
     @Autowired
     private RabbitmqProvider rabbitmqProvider;
-    @Autowired
-    private Web3j web3j;
     @Autowired
     private IConfigService iConfigService;
     @Autowired
@@ -60,6 +63,66 @@ public class EventListener implements ApplicationRunner {
 
     @Override
     public void run(ApplicationArguments args) throws Exception {
+//        try {
+//            WebSocketClient webSocketClient = new WebSocketClient(new URI("wss://ws-mainnet-node.huobichain.com"));
+//            boolean includeRawResponses = false;
+//            WebSocketService webSocketService = new WebSocketService(webSocketClient, includeRawResponses);
+//            webSocketService.connect();
+//            Web3j hbWeb3j = Web3j.build(webSocketService);
+//            OkHttpClient.Builder builder1 = new OkHttpClient.Builder();
+//            builder1.connectTimeout(30*1000, TimeUnit.MILLISECONDS);
+//            builder1.writeTimeout(30*1000, TimeUnit.MILLISECONDS);
+//            builder1.readTimeout(30*1000, TimeUnit.MILLISECONDS);
+//            OkHttpClient httpClient = builder1.build();
+//            Web3j hbWeb3j = Web3j.build(new HttpService("https://http-testnet.hecochain.com", httpClient, false));
+//            Event event1 = new Event("E_Create",
+//                    Arrays.<TypeReference<?>>asList(new TypeReference<Address>() {
+//                    }, new TypeReference<Address>() {
+//                    }, new TypeReference<Address>() {
+//                    }, new TypeReference<Address>() {
+//                    }, new TypeReference<Address>() {
+//                    }, new TypeReference<Uint256>() {
+//                    }));
+//            final BigInteger[] num = new BigInteger[1];
+//            num[0] = new BigInteger("2646297");
+//            EthFilter ethFilter = new EthFilter(DefaultBlockParameter.valueOf(num[0]),
+////                    DefaultBlockParameterName.LATEST, "0x51b3829e51cc02323B374659feA0A5df87A04a4d");
+//                    DefaultBlockParameter.valueOf(new BigInteger("2666297")), "0x51b3829e51cc02323B374659feA0A5df87A04a4d");
+//            ethFilter.addSingleTopic(EventEncoder.encode(event1));
+//            hbWeb3j.ethLogObservable(ethFilter).subscribe(log -> {
+//                try {
+//                    EthBlock ethBlock = hbWeb3j.ethGetBlockByNumber(DefaultBlockParameter.valueOf(log.getBlockNumber()), true).send();
+//                    Date eventTime = DateUtils.eventTimeStamp(ethBlock.getResult().getTimestamp().toString());
+//                    EventValues eventValues = Contract.staticExtractEventParameters(event1, log);
+//                    List<Type> nonIndexedValues = eventValues.getNonIndexedValues();
+//                    Order order = new Order();
+//                    order.setContractCreateTime(eventTime);
+//                    order.setOrderNum(nonIndexedValues.get(0).getValue().toString());
+//                    order.setContractCreatorAddr(nonIndexedValues.get(1).getValue().toString());
+//                    TokenPrice buyerSubject = iTokenPriceService.getOne(new LambdaUpdateWrapper<TokenPrice>().eq(TokenPrice::getTokenAddr, nonIndexedValues.get(4).getValue().toString()));
+//                    if (buyerSubject != null) {
+//                        order.setBuyerSubjectMatter(buyerSubject.getName());
+//                        order.setBuyerSubjectMatterImg(buyerSubject.getImg());
+//                    }
+//                    order.setBuyerSubjectMatterAddr(nonIndexedValues.get(4).getValue().toString());
+//                    TokenPrice sellerSubject = iTokenPriceService.getOne(new LambdaUpdateWrapper<TokenPrice>().eq(TokenPrice::getTokenAddr, nonIndexedValues.get(3).getValue().toString()));
+//                    if (sellerSubject != null) {
+//                        order.setSellerSubjectMatter(sellerSubject.getName());
+//                        order.setSellerSubjectMatterImg(sellerSubject.getImg());
+//                    }
+//                    order.setSellerSubjectMatterAddr(nonIndexedValues.get(3).getValue().toString());
+//                    order.setMoneyReward(nonIndexedValues.get(5).getValue().toString());
+//                    order.setContractCreateBlockNumber(log.getBlockNumber().intValue());
+//                    order.setChainType(1);
+//                    rabbitmqProvider.orderCreate(order);
+//                } catch (Exception e) {
+//                    EventListener.log.error("订单创建事件异常", e);
+//                }
+//            });
+//
+//        } catch (Exception e) {
+//            log.error("异常", e);
+//        }
         int waitTime = Integer.parseInt(iConfigService.getConfig("WAIT_TIME"));
         // 获取各个链开始区块
         List<Config> startBlockNumberList = iConfigService.list(new LambdaUpdateWrapper<Config>()
@@ -70,7 +133,6 @@ public class EventListener implements ApplicationRunner {
         // 获取各个链节点
         List<Config> chainList = iConfigService.list(new LambdaUpdateWrapper<Config>()
                 .in(Config::getIndexName, "Hb_Chain", "Ba_Chain", "Eth_Chain"));
-
         OkHttpClient.Builder builder = new OkHttpClient.Builder();
         builder.connectTimeout(30*1000, TimeUnit.MILLISECONDS);
         builder.writeTimeout(30*1000, TimeUnit.MILLISECONDS);
@@ -164,13 +226,15 @@ public class EventListener implements ApplicationRunner {
                             order.setContractCreateTime(eventTime);
                             order.setOrderNum(nonIndexedValues.get(0).getValue().toString());
                             order.setContractCreatorAddr(nonIndexedValues.get(1).getValue().toString());
-                            TokenPrice buyerSubject = iTokenPriceService.getOne(new LambdaUpdateWrapper<TokenPrice>().eq(TokenPrice::getTokenAddr, nonIndexedValues.get(4).getValue().toString()));
+                            TokenPrice buyerSubject = iTokenPriceService.getOne(new LambdaUpdateWrapper<TokenPrice>().eq(TokenPrice::getTokenAddr, nonIndexedValues.get(4).getValue().toString())
+                                    .eq(TokenPrice::getChainType, order.getChainType()));
                             if (buyerSubject != null) {
                                 order.setBuyerSubjectMatter(buyerSubject.getName());
                                 order.setBuyerSubjectMatterImg(buyerSubject.getImg());
                             }
                             order.setBuyerSubjectMatterAddr(nonIndexedValues.get(4).getValue().toString());
-                            TokenPrice sellerSubject = iTokenPriceService.getOne(new LambdaUpdateWrapper<TokenPrice>().eq(TokenPrice::getTokenAddr, nonIndexedValues.get(3).getValue().toString()));
+                            TokenPrice sellerSubject = iTokenPriceService.getOne(new LambdaUpdateWrapper<TokenPrice>().eq(TokenPrice::getTokenAddr, nonIndexedValues.get(3).getValue().toString())
+                                    .eq(TokenPrice::getChainType, order.getChainType()));
                             if (sellerSubject != null) {
                                 order.setSellerSubjectMatter(sellerSubject.getName());
                                 order.setSellerSubjectMatterImg(sellerSubject.getImg());

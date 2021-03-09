@@ -31,6 +31,8 @@ public class TokenPrice implements Serializable {
      */
     private String name;
 
+    private String realName;
+
     /**
      * 代币价格 转换USDT
      */
