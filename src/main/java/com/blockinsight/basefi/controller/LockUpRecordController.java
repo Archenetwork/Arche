@@ -38,4 +38,5 @@ public class LockUpRecordController {
             return R.error();
         }
     }
+
 }

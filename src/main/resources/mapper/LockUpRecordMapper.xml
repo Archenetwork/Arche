@@ -4,7 +4,7 @@
 
     <select id="getSumPriceAndCurrentPrice" resultType="java.util.Map">
         select sum(ifnull(l.sum_count, 0) * ifnull(p.price, 0)) sumPrice,
-        sum(ifnull(l.current_count,0) * ifnull(p.price, 0)) currentPrice
+        sum(ifnull(l.current_count,0) * ifnull(p.price, 0)) currentPrice, p.chain_type chainType
         from lock_up_record l left join token_price p on p.token_addr = l.token_addr
         <if test="chainType != null">
             where l.chain_type = ${chainType}
@@ -13,7 +13,7 @@
 
     <select id="getTopThreeCurrentPriceToken" resultType="java.util.Map">
         select ifnull(l.current_count,0) * ifnull(p.price, 0) currPrice,
-        l.current_count , l.token_addr, p.name, p.img
+        l.current_count , l.token_addr, p.name, p.img, p.chain_type chainType
         from lock_up_record l
         left join token_price p on p.token_addr = l.token_addr and p.chain_type = l.chain_type
         <if test="chainType != null">

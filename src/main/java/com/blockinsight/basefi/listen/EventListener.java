@@ -6,6 +6,7 @@ import com.blockinsight.basefi.common.constant.BaseConstants;
 import com.blockinsight.basefi.common.rabbitmq.provider.RabbitmqProvider;
 import com.blockinsight.basefi.common.util.DateUtils;
 import com.blockinsight.basefi.common.util.RedisUtils;
+import com.blockinsight.basefi.common.util.Web3JUtils;
 import com.blockinsight.basefi.entity.*;
 import com.blockinsight.basefi.service.*;
 import lombok.extern.slf4j.Slf4j;
@@ -34,8 +35,10 @@ import org.web3j.protocol.websocket.WebSocketService;
 import org.web3j.tx.Contract;
 
 import javax.jws.WebService;
+import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.net.URI;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Date;
 import java.util.List;
@@ -64,11 +67,11 @@ public class EventListener implements ApplicationRunner {
     @Override
     public void run(ApplicationArguments args) throws Exception {
 //        try {
-//            WebSocketClient webSocketClient = new WebSocketClient(new URI("wss://ws-mainnet-node.huobichain.com"));
-//            boolean includeRawResponses = false;
-//            WebSocketService webSocketService = new WebSocketService(webSocketClient, includeRawResponses);
-//            webSocketService.connect();
-//            Web3j hbWeb3j = Web3j.build(webSocketService);
+////            WebSocketClient webSocketClient = new WebSocketClient(new URI("wss://ws-mainnet-node.huobichain.com"));
+////            boolean includeRawResponses = false;
+////            WebSocketService webSocketService = new WebSocketService(webSocketClient, includeRawResponses);
+////            webSocketService.connect();
+////            Web3j hbWeb3j = Web3j.build(webSocketService);
 //            OkHttpClient.Builder builder1 = new OkHttpClient.Builder();
 //            builder1.connectTimeout(30*1000, TimeUnit.MILLISECONDS);
 //            builder1.writeTimeout(30*1000, TimeUnit.MILLISECONDS);

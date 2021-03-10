@@ -55,4 +55,5 @@ public interface IOrderService extends IService<Order> {
 
     int updateOrderById(List<Order> list);
 
+    R orderCount(Integer chainType);
 }

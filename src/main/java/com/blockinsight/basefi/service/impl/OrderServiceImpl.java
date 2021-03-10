@@ -6,14 +6,18 @@ import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.blockinsight.basefi.common.constant.BaseConstants;
+import com.blockinsight.basefi.common.parentclass.BaseEntity;
 import com.blockinsight.basefi.common.resp.R;
 import com.blockinsight.basefi.common.util.BeanCopyUtils;
 import com.blockinsight.basefi.entity.Config;
 import com.blockinsight.basefi.entity.Order;
+import com.blockinsight.basefi.entity.RevenuePool;
+import com.blockinsight.basefi.entity.YesterDayOrderNum;
 import com.blockinsight.basefi.entity.dto.OrderDto;
 import com.blockinsight.basefi.mapper.OrderMapper;
 import com.blockinsight.basefi.service.IConfigService;
 import com.blockinsight.basefi.service.IOrderService;
+import com.blockinsight.basefi.service.IYesterDayOrderNumService;
 import lombok.extern.slf4j.Slf4j;
 import okhttp3.OkHttpClient;
 import org.apache.commons.lang3.StringUtils;
@@ -24,7 +28,9 @@ import org.web3j.protocol.core.methods.response.EthBlockNumber;
 import org.web3j.protocol.http.HttpService;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -40,7 +46,10 @@ import java.util.concurrent.TimeUnit;
 public class OrderServiceImpl extends ServiceImpl<OrderMapper, Order> implements IOrderService {
     @Autowired
     private IConfigService iConfigService;
-
+    @Autowired
+    private IOrderService iOrderService;
+    @Autowired
+    private IYesterDayOrderNumService iYesterDayOrderNumService;
 
     @Override
     public R recommendedOrder(Integer pageNumber, Integer pageSize) {
@@ -125,6 +134,7 @@ public class OrderServiceImpl extends ServiceImpl<OrderMapper, Order> implements
             orderLambdaQueryWrapper.eq(StringUtils.isNotBlank(orderInpParam.getBuyerSubject()), Order::getBuyerSubjectMatterAddr, orderInpParam.getBuyerSubject());
             orderLambdaQueryWrapper.eq(StringUtils.isNotBlank(orderInpParam.getOrderNumber()), Order::getOrderNum, orderInpParam.getOrderNumber());
             orderLambdaQueryWrapper.apply(sql);
+            orderLambdaQueryWrapper.orderByDesc(Order::getContractCreateTime);
             IPage<Order> page = this.page(iPage, orderLambdaQueryWrapper);
             return R.ok().put("data", page);
         } catch (Exception e) {
@@ -191,6 +201,7 @@ public class OrderServiceImpl extends ServiceImpl<OrderMapper, Order> implements
             } else if (chainType == BaseConstants.ChainType.ETH.getCode()) {
                 currentEndBlockNumber = ethEndBlockNumber;
             }
+            log.warn("当前区块高度 currentEndBlockNumber:{}", currentEndBlockNumber);
             switch (statusOne) {
                 case 2:
                     log.warn("查询待支付保证金 statusOne:{}", statusOne);
@@ -257,8 +268,8 @@ public class OrderServiceImpl extends ServiceImpl<OrderMapper, Order> implements
                         sql = splic + currentEndBlockNumber + splic2 + currentEndBlockNumber;
                     } else {
                         sql = "case chain_type when 1 then " + splic + hbEndBlockNumber + splic2 + hbEndBlockNumber +
-                                " when 2 then " + splic + baEndBlockNumber + splic2 + hbEndBlockNumber +
-                                " when 3 then " + splic + ethEndBlockNumber + splic2 + hbEndBlockNumber
+                                " when 2 then " + splic + baEndBlockNumber + splic2 + baEndBlockNumber +
+                                " when 3 then " + splic + ethEndBlockNumber + splic2 + ethEndBlockNumber
                                 + " end ";
                     }
                     orderLambdaQueryWrapper.and(i -> i
@@ -348,6 +359,7 @@ public class OrderServiceImpl extends ServiceImpl<OrderMapper, Order> implements
                         .or()
                         .eq(Order::getBuyerSubjectMatterAddr, searchFor);
             }
+            orderLambdaQueryWrapper.orderByDesc(Order::getContractCreateTime);
             IPage<Order> page = this.page(iPage, orderLambdaQueryWrapper);
             return R.ok().put("data", page);
         } catch (Exception e) {
@@ -359,5 +371,131 @@ public class OrderServiceImpl extends ServiceImpl<OrderMapper, Order> implements
     @Override
     public int updateOrderById(List<Order> list) {
         return baseMapper.updateOrderById(list);
+    }
+
+    @Override
+    public R orderCount(Integer chainType) {
+        try {
+            Map<String, Object> result = new HashMap<>();
+            Web3j hbWeb3j = null;
+            Web3j baWeb3j = null;
+            Web3j ethWeb3j = null;
+            List<Config> chainList = iConfigService.list(new LambdaUpdateWrapper<Config>()
+                    .in(Config::getIndexName, "Hb_Chain", "Ba_Chain", "Eth_Chain"));
+            OkHttpClient.Builder builder = new OkHttpClient.Builder();
+            builder.connectTimeout(30*1000, TimeUnit.MILLISECONDS);
+            builder.writeTimeout(30*1000, TimeUnit.MILLISECONDS);
+            builder.readTimeout(30*1000, TimeUnit.MILLISECONDS);
+            OkHttpClient httpClient = builder.build();
+            for (Config config : chainList) {
+                if ("Hb_Chain".equals(config.getIndexName())) {
+                    hbWeb3j = Web3j.build(new HttpService(config.getIndexValue(), httpClient, false));
+                } else if ("Ba_Chain".equals(config.getIndexName())) {
+                    baWeb3j = Web3j.build(new HttpService(config.getIndexValue(), httpClient, false));
+                } else if ("Eth_Chain".equals(config.getIndexName())) {
+                    ethWeb3j = Web3j.build(new HttpService(config.getIndexValue(), httpClient, false));
+                }
+            }
+            // 获取当前节点最新区块号
+            EthBlockNumber hbBlockNumber = hbWeb3j.ethBlockNumber().send();
+            EthBlockNumber baBlockNumber = baWeb3j.ethBlockNumber().send();
+            EthBlockNumber ethBlockNumber = ethWeb3j.ethBlockNumber().send();
+            String hbEndBlockNumber = hbBlockNumber.getBlockNumber().toString();
+            String baEndBlockNumber = baBlockNumber.getBlockNumber().toString();
+            String ethEndBlockNumber = ethBlockNumber.getBlockNumber().toString();
+            if (chainType == BaseConstants.ChainType.ALL.getCode()) {
+                int count = iOrderService.count();
+                Map<String, Object> orderNumber = new HashMap<>();
+                orderNumber.put("totalNum", count);
+                String splic = " contract_initialize_block_number + effective_height > ";
+                String sql = " case chain_type when 1 then " + splic + hbEndBlockNumber +
+                        " when 2 then " + splic + baEndBlockNumber +
+                        " when 3 then" + splic + ethEndBlockNumber + " end ";
+                int waitEffectNum = iOrderService.count(new LambdaUpdateWrapper<Order>()
+                        .apply(sql));
+                orderNumber.put("waitEffectNum", waitEffectNum);
+                splic = " contract_initialize_block_number + effective_height < ";
+                String splic2 = " and contract_initialize_block_number + delivery_height > ";
+                sql = " case chain_type when 1 then " + splic + hbEndBlockNumber + splic2 + hbEndBlockNumber +
+                        " when 2 then " + splic + baEndBlockNumber + splic2 + baEndBlockNumber +
+                        " when 3 then" + splic + ethEndBlockNumber + splic2 + ethEndBlockNumber + " end ";
+                int waitDeliveryNum = iOrderService.count(new LambdaUpdateWrapper<Order>()
+                        .eq(Order::getEarnestMoneyStatus, BaseConstants.EarnestMoneyStatus.ALL_PAY.getCode())
+                        .apply(sql));
+                orderNumber.put("waitDeliveryNum", waitDeliveryNum);
+                result.put("orderNum", orderNumber);
+                List<YesterDayOrderNum> ylist = iYesterDayOrderNumService.list(new LambdaUpdateWrapper<YesterDayOrderNum>()
+                        .orderByDesc(BaseEntity::getCreateTime));
+                YesterDayOrderNum yesterDayOrderNum;
+                if (ylist.isEmpty()) {
+                    yesterDayOrderNum = new YesterDayOrderNum();
+                    yesterDayOrderNum.setTotalNum(0);
+                    yesterDayOrderNum.setWaitDeliveryNum(0);
+                    yesterDayOrderNum.setWaitEffectNum(0);
+                    yesterDayOrderNum.setChainType(BaseConstants.ChainType.HB.getCode());
+                    iYesterDayOrderNumService.save(yesterDayOrderNum);
+                    yesterDayOrderNum.setChainType(BaseConstants.ChainType.BA.getCode());
+                    iYesterDayOrderNumService.save(yesterDayOrderNum);
+                    yesterDayOrderNum.setChainType(BaseConstants.ChainType.ETH.getCode());
+                    iYesterDayOrderNumService.save(yesterDayOrderNum);
+                } else {
+                    YesterDayOrderNum yesterDay = new YesterDayOrderNum();
+                    yesterDay.setWaitDeliveryNum(0);
+                    yesterDay.setWaitEffectNum(0);
+                    yesterDay.setTotalNum(0);
+                    for (int i = 0; i < ylist.size(); i++) {
+                        if (i == 3)
+                            break;
+                        YesterDayOrderNum dayOrderNum = ylist.get(i);
+                        yesterDay.setTotalNum(yesterDay.getTotalNum() + dayOrderNum.getTotalNum());
+                        yesterDay.setWaitEffectNum(yesterDay.getWaitEffectNum() + dayOrderNum.getWaitEffectNum());
+                        yesterDay.setWaitDeliveryNum(yesterDay.getWaitDeliveryNum() + dayOrderNum.getWaitDeliveryNum());
+                    }
+                    yesterDayOrderNum = yesterDay;
+                }
+                result.put("yesterDayOrderNum", yesterDayOrderNum);
+            } else {
+                int count = iOrderService.count(new LambdaUpdateWrapper<Order>().eq(Order::getChainType, chainType));
+                String currentBlockNumber = "";
+                if (chainType == BaseConstants.ChainType.HB.getCode()) {
+                    currentBlockNumber = hbEndBlockNumber;
+                } else if (chainType == BaseConstants.ChainType.BA.getCode()) {
+                    currentBlockNumber = baEndBlockNumber;
+                } else if (chainType == BaseConstants.ChainType.ETH.getCode()) {
+                    currentBlockNumber = ethEndBlockNumber;
+                }
+                Map<String, Object> orderNumber = new HashMap<>();
+                orderNumber.put("totalNum", count);
+                String sql = " contract_initialize_block_number + effective_height > " + currentBlockNumber;
+                int waitEffectNum = iOrderService.count(new LambdaUpdateWrapper<Order>()
+                        .apply(sql));
+                orderNumber.put("waitEffectNum", waitEffectNum);
+                sql = " contract_initialize_block_number + effective_height < " + currentBlockNumber +
+                        " and contract_initialize_block_number + delivery_height > " + currentBlockNumber;
+                int waitDeliveryNum = iOrderService.count(new LambdaUpdateWrapper<Order>()
+                        .eq(Order::getEarnestMoneyStatus, BaseConstants.EarnestMoneyStatus.ALL_PAY.getCode())
+                        .apply(sql));
+                orderNumber.put("waitDeliveryNum", waitDeliveryNum);
+                result.put("orderNum", orderNumber);
+                List<YesterDayOrderNum> ylist = iYesterDayOrderNumService.list(new LambdaUpdateWrapper<YesterDayOrderNum>()
+                        .eq(YesterDayOrderNum::getChainType, chainType).orderByDesc(BaseEntity::getCreateTime));
+                YesterDayOrderNum yesterDayOrderNum;
+                if (ylist.isEmpty()) {
+                    yesterDayOrderNum = new YesterDayOrderNum();
+                    yesterDayOrderNum.setTotalNum(0);
+                    yesterDayOrderNum.setWaitDeliveryNum(0);
+                    yesterDayOrderNum.setWaitEffectNum(0);
+                    yesterDayOrderNum.setChainType(chainType);
+                    iYesterDayOrderNumService.save(yesterDayOrderNum);
+                } else {
+                    yesterDayOrderNum = ylist.get(0);
+                }
+                result.put("yesterDayOrderNum", yesterDayOrderNum);
+            }
+            return R.ok().put("data", result);
+        } catch (Exception e) {
+            log.error("首页订单数量异常", e);
+            return R.error();
+        }
     }
 }

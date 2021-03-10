@@ -258,7 +258,7 @@ public class OrderBusiness {
                 is = false;
             } else {
                 try {
-                    log.warn("买家支付保证金等待2s orderNum:{}", earnestMoneyRecordParam.getOrderNum());
+                    log.warn("卖家支付保证金等待2s orderNum:{}", earnestMoneyRecordParam.getOrderNum());
                     Thread.sleep(2000);
                 } catch (Exception e) {
                     log.error("卖家支付保证金事件异常", e);

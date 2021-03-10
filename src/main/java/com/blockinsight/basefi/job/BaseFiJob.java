@@ -58,8 +58,8 @@ public class BaseFiJob {
     @Autowired
     private IConfigService iConfigService;
 
-    @Scheduled(cron = "0 */59 * * * ?")
-//    @Scheduled(cron = "*/5 * * * * ?")
+//    @Scheduled(cron = "0 */10 * * * ?")
+    @Scheduled(cron = "*/5 * * * * ?")
     @Async
     public void sumEarnings() {
         String lockName = "tickersLock";
@@ -108,8 +108,10 @@ public class BaseFiJob {
                     currentWeb3j = ethWeb3j;
                 }
                 String swapContractAddress = config.getIndexValue();
+                inputs.clear();
                 inputs.add(new Address(swapContractAddress));
-                List<TokenPrice> list = iTokenPriceService.list();
+                List<TokenPrice> list = iTokenPriceService.list(new LambdaUpdateWrapper<TokenPrice>()
+                        .isNotNull(TokenPrice::getTokenAddr).eq(TokenPrice::getChainType, chainType));
                 if (!list.isEmpty()) {
                     BigDecimal bigDecimal = new BigDecimal("0");
                     for (TokenPrice tokenPrice : list) {
@@ -121,7 +123,8 @@ public class BaseFiJob {
                             }
                         }
                     }
-                    List<RevenuePool> revenuePools = iRevenuePoolService.list(new LambdaUpdateWrapper<>());
+                    List<RevenuePool> revenuePools = iRevenuePoolService.list(new LambdaUpdateWrapper<RevenuePool>()
+                            .eq(RevenuePool::getChainType, chainType));
                     if (revenuePools.isEmpty()) {
                         RevenuePool revenuePool = new RevenuePool();
                         revenuePool.setPrice(bigDecimal.toString());

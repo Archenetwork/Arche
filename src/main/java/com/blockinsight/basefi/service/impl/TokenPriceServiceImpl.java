@@ -46,7 +46,12 @@ public class TokenPriceServiceImpl extends ServiceImpl<TokenPriceMapper, TokenPr
 
     @Override
     public R getTokenPrice(String addr, Integer chainType) {
-        TokenPrice tokenPrice = this.getOne(new LambdaUpdateWrapper<TokenPrice>().eq(TokenPrice::getChainType, chainType).eq(TokenPrice::getTokenAddr, addr));
+        LambdaUpdateWrapper<TokenPrice> eq = new LambdaUpdateWrapper<TokenPrice>()
+                .eq(TokenPrice::getTokenAddr, addr);
+        if (chainType != 0) {
+            eq.eq(TokenPrice::getChainType, chainType);
+        }
+        TokenPrice tokenPrice = this.getOne(eq);
         if (tokenPrice == null) {
             tokenPrice = new TokenPrice();
             tokenPrice.setPrice("0");

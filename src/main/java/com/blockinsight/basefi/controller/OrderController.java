@@ -10,6 +10,8 @@ import io.swagger.annotations.ApiParam;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
+import java.math.BigDecimal;
+
 /**
  * <p>
  * 订单表 前端控制器
@@ -85,4 +87,16 @@ public class OrderController {
                            @ApiParam(name = "pageSize", value = "每页数量", required = true) @RequestParam("pageSize") Integer pageSize) {
         return iOrderService.userOrderList(chainType, userNum, searchFor, createStatus, status, pageNumber, pageSize);
     }
+
+    /**
+     * @param chainType 链类型
+     * @return 首页订单数量
+     */
+    @ApiOperation(value = "首页订单数量", notes = "首页订单数量", httpMethod = "GET")
+    @GetMapping("/order-count")
+    public R orderCount(@ApiParam(name = "chainType", value = "链类型", required = true) @RequestParam("chainType") Integer chainType) {
+        return iOrderService.orderCount(chainType);
+    }
+
+
 }
